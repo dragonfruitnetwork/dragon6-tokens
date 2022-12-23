@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <IsPackable>true</IsPackable>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+        <Title>Dragon6 TokenRotator</Title>
+        <Authors>DragonFruit Network</Authors>
+        <Copyright>Copyright 2022 (c) DragonFruit Network</Copyright>
+        <Description>Bulk token rotation mechanism, using IHostedService</Description>
+        <RepositoryUrl>https://github.com/dragonfruitnetwork/dragon6-tokens</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/dragonfruitnetwork/dragon6-tokens</PackageProjectUrl>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DragonFruit.Six.Api" Version="2022.1223.1" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+        <PackageReference Include="morelinq" Version="3.3.2" />
+        <PackageReference Include="Polly" Version="7.2.3" />
+    </ItemGroup>
+</Project>
