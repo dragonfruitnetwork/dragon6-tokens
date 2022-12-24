@@ -29,15 +29,10 @@ namespace DragonFruit.Six.TokenRotator.Service
             return _redis.RedisCollection<RedisServiceToken>().InsertAsync(redisToken, WhenKey.Always, token.Expiry - DateTime.UtcNow);
         }
 
-        public async Task RemoveToken(string sessionId, CancellationToken cancellation)
+        public Task RemoveToken(string sessionId, CancellationToken cancellation)
         {
-            var collection = _redis.RedisCollection<RedisServiceToken>();
-            var token = await collection.FindByIdAsync(sessionId).ConfigureAwait(false);
-
-            if (token != null)
-            {
-                await collection.DeleteAsync(token).ConfigureAwait(false);
-            }
+            // not needed - redis will automatically delete tokens when they expire
+            return Task.CompletedTask;
         }
 
         public async Task<ICollection<IUbisoftAccountToken>> GetTokens(IEnumerable<string> ubisoftIds, CancellationToken cancellation)
