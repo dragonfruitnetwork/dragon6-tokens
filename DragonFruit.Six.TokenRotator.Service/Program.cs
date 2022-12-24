@@ -7,6 +7,7 @@ using DragonFruit.Six.Api.Authentication.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Redis.OM;
 using Redis.OM.Modeling;
 using StackExchange.Redis;
@@ -19,6 +20,11 @@ namespace DragonFruit.Six.TokenRotator.Service
         {
             var host = Host.CreateDefaultBuilder(args)
                            .ConfigureAppConfiguration(cfg => cfg.AddIniFile("d6accounts.ini"))
+                           .ConfigureLogging(logging =>
+                           {
+                               logging.ClearProviders();
+                               logging.AddConsole();
+                           })
                            .ConfigureServices(ConfigureServices)
                            .Build();
 
