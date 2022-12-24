@@ -27,8 +27,16 @@ namespace DragonFruit.Six.TokenRotator
             Credentials = credentials;
             LastTokenSessionId = token.SessionId;
 
+            // ensure that the due timespan is not negative
+            var nextUpdateDue = token.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt);
+
+            if (nextUpdateDue < TimeSpan.Zero)
+            {
+                nextUpdateDue = TimeSpan.Zero;
+            }
+
             _ssf = ssf;
-            _timer = new Timer(FetchNewToken, null, token.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt), Timeout.InfiniteTimeSpan);
+            _timer = new Timer(FetchNewToken, null, nextUpdateDue, Timeout.InfiniteTimeSpan);
         }
 
         public ServiceTokenClient(IServiceScopeFactory ssf, UbisoftServiceCredentials credentials, TimeSpan delay)
