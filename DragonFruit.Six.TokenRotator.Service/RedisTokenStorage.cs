@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -42,7 +43,7 @@ namespace DragonFruit.Six.TokenRotator.Service
         public async Task<ICollection<IUbisoftAccountToken>> GetAllTokens(CancellationToken cancellation)
         {
             var allItems = await _redis.RedisCollection<RedisServiceToken>().ToListAsync().ConfigureAwait(false);
-            return (ICollection<IUbisoftAccountToken>)allItems;
+            return allItems.Cast<IUbisoftAccountToken>().ToList();
         }
     }
 }
