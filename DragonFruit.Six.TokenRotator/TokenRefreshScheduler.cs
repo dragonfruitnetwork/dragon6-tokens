@@ -34,15 +34,12 @@ namespace DragonFruit.Six.TokenRotator
 
         async Task IHostedService.StartAsync(CancellationToken cancellationToken)
         {
-            var logins = _config.GetSection("UbisoftAccount")
-                                .GetChildren()
-                                .SelectMany(UbisoftServiceCredentials.FromConfiguration)
-                                .ToList();
-
             var scheduledCredentials = new List<UbisoftServiceCredentials>();
+            var logins = _config.GetSection("UbisoftAccount").GetChildren().SelectMany(UbisoftServiceCredentials.FromConfiguration).ToList();
+
             IEnumerable<IUbisoftAccountToken> existingTokens = await _storage.GetTokens(logins.Select(x => x.Id).Distinct(), cancellationToken).ConfigureAwait(false);
 
-            _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count());
+            _logger.LogInformation("Discovered {users} users, {count} logins and {number} active tokens", logins.Select(x => x.Id).Distinct().Count(), logins.Count, existingTokens.Count());
 
             // ensure that duplicate tokens with the same app and ubisoft id are ignored (keep the newest token)
             existingTokens = existingTokens.GroupBy(x => new { x.UbisoftId, x.AppId })
