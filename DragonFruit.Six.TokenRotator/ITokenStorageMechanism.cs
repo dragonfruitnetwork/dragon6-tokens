@@ -13,6 +13,6 @@ namespace DragonFruit.Six.TokenRotator
         Task AddToken(UbisoftToken token, CancellationToken cancellation);
         Task RemoveToken(string sessionId, CancellationToken cancellation);
 
-        Task<ICollection<IUbisoftAccountToken>> GetAllTokens(CancellationToken cancellation);
+        Task<ICollection<IUbisoftAccountToken>> GetTokens(IEnumerable<string> ubisoftIds, CancellationToken cancellation);
     }
 }

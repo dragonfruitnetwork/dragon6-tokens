@@ -40,9 +40,13 @@ namespace DragonFruit.Six.TokenRotator.Service
             }
         }
 
-        public async Task<ICollection<IUbisoftAccountToken>> GetAllTokens(CancellationToken cancellation)
+        public async Task<ICollection<IUbisoftAccountToken>> GetTokens(IEnumerable<string> ubisoftIds, CancellationToken cancellation)
         {
-            var allItems = await _redis.RedisCollection<RedisServiceToken>().ToListAsync().ConfigureAwait(false);
+            var allItems = await _redis.RedisCollection<RedisServiceToken>()
+                                       .Where(x => ubisoftIds.Contains(x.UbisoftId))
+                                       .ToListAsync()
+                                       .ConfigureAwait(false);
+
             return allItems.Cast<IUbisoftAccountToken>().ToList();
         }
     }
