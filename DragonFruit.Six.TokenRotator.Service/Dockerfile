@@ -2,4 +2,4 @@
 WORKDIR /app
 
 ADD . .
-ENTRYPOINT ["dotnet", "DragonFruit.Six.TokenRotator.Host.dll"]
+ENTRYPOINT ["dotnet", "DragonFruit.Six.TokenRotator.Service.dll"]
