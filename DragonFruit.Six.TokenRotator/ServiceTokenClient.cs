@@ -83,7 +83,7 @@ namespace DragonFruit.Six.TokenRotator
             var nextRefreshDue = ubisoftToken.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt);
 
             _timer.Change(nextRefreshDue, Timeout.InfiniteTimeSpan);
-            logger.LogInformation("{id} token refresh date changed. Next reset in {in}", nextRefreshDue.Humanize());
+            logger.LogInformation("{id} token refresh date changed. Next reset in {in}", Credentials, nextRefreshDue.Humanize());
         }
 
         public void Dispose()
