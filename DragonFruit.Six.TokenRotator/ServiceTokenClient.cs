@@ -20,7 +20,7 @@ namespace DragonFruit.Six.TokenRotator
         private readonly IServiceScopeFactory _ssf;
         private readonly CancellationTokenSource _cancellation = new();
 
-        internal static TimeSpan TokenRefreshPreempt => TimeSpan.FromMinutes(1800 + Random.Shared.Next(0, 180));
+        internal static TimeSpan TokenRefreshPreempt => TimeSpan.FromSeconds(1800 + Random.Shared.Next(0, 180));
 
         public ServiceTokenClient(IServiceScopeFactory ssf, UbisoftServiceCredentials credentials, IUbisoftToken token)
         {
