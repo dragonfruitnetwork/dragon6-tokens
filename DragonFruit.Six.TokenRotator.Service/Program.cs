@@ -11,6 +11,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Redis.OM;
 using Redis.OM.Modeling;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using StackExchange.Redis;
 
 namespace DragonFruit.Six.TokenRotator.Service
@@ -21,10 +25,10 @@ namespace DragonFruit.Six.TokenRotator.Service
         {
             var host = Host.CreateDefaultBuilder(args)
                            .ConfigureAppConfiguration(cfg => cfg.AddIniFile("d6accounts.ini"))
-                           .ConfigureLogging(logging =>
+                           .ConfigureLogging((opts, logging) =>
                            {
                                logging.ClearProviders();
-                               logging.AddConsole();
+                               logging.AddSerilog(GetLogger(opts.Configuration));
                            })
                            .ConfigureServices(ConfigureServices)
                            .Build();
@@ -93,6 +97,29 @@ namespace DragonFruit.Six.TokenRotator.Service
             };
 
             return redisConfig;
+        }
+
+        private static Logger GetLogger(IConfiguration config)
+        {
+            var sentryDsn = config["SentryDsn"];
+            var loggerBuilder = new LoggerConfiguration().WriteTo.Console(theme: AnsiConsoleTheme.Literate);
+
+#if !DEBUG
+            loggerBuilder.MinimumLevel.Information();
+#endif
+
+            if (!string.IsNullOrEmpty(sentryDsn))
+            {
+                loggerBuilder.WriteTo.Sentry(o =>
+                {
+                    o.Dsn = sentryDsn;
+                    o.MaxBreadcrumbs = 25;
+                    o.MinimumEventLevel = LogEventLevel.Error;
+                    o.Release = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3);
+                });
+            }
+
+            return loggerBuilder.CreateLogger();
         }
     }
 }
