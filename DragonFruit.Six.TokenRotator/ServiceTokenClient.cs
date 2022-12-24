@@ -7,6 +7,7 @@ using System.Threading;
 using DragonFruit.Data;
 using DragonFruit.Six.Api.Authentication;
 using DragonFruit.Six.Api.Authentication.Entities;
+using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -19,6 +20,7 @@ namespace DragonFruit.Six.TokenRotator
 
         private readonly Timer _timer;
         private readonly IServiceScopeFactory _ssf;
+        private readonly CancellationTokenSource _cancellation = new();
 
         public ServiceTokenClient(IServiceScopeFactory ssf, UbisoftServiceCredentials credentials, IUbisoftToken token)
         {
@@ -49,14 +51,12 @@ namespace DragonFruit.Six.TokenRotator
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<ServiceTokenClient>>();
 
             var ubisoftToken = await Policy.Handle<Exception>()
-                                           .WaitAndRetryForeverAsync(a => TimeSpan.FromSeconds(Math.Max(5 * a, 60)), (exception, timeout) =>
-                                           {
-                                               logger.LogWarning("Token fetch for {cred} failed (waiting {x} seconds): {ex}", Credentials, timeout.TotalSeconds, exception.Message);
-                                           })
+                                           .WaitAndRetryForeverAsync(a => TimeSpan.FromSeconds(Math.Max(5 * a, 60)), (exception, timeout) => logger.LogWarning("Token fetch for {cred} failed (waiting {x} seconds): {ex}", Credentials, timeout.TotalSeconds, exception.Message))
                                            .ExecuteAsync(async () =>
                                            {
                                                using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                                               return await client.GetUbiTokenAsync(Credentials.Email, Credentials.Password, Credentials.Service, cancellation.Token);
+                                               using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _cancellation.Token);
+                                               return await client.GetUbiTokenAsync(Credentials.Email, Credentials.Password, Credentials.Service, linkedCancellation.Token);
                                            })
                                            .ConfigureAwait(false);
 
@@ -66,10 +66,10 @@ namespace DragonFruit.Six.TokenRotator
             {
                 await Policy.Handle<Exception>()
                             .RetryAsync(5, (e, _) => logger.LogWarning("Data persistence failed: {message}", e.Message))
-                            .ExecuteAsync(() => storage.AddToken(ubisoftToken))
+                            .ExecuteAsync(() => storage.AddToken(ubisoftToken, _cancellation.Token))
                             .ConfigureAwait(false);
 
-                _ = storage.RemoveToken(LastTokenSessionId).ConfigureAwait(false);
+                _ = storage.RemoveToken(LastTokenSessionId, _cancellation.Token).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -77,12 +77,18 @@ namespace DragonFruit.Six.TokenRotator
             }
 
             LastTokenSessionId = ubisoftToken.SessionId;
-            _timer.Change(ubisoftToken.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt), Timeout.InfiniteTimeSpan);
+            var nextRefreshDue = ubisoftToken.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt);
+
+            _timer.Change(nextRefreshDue, Timeout.InfiniteTimeSpan);
+            logger.LogInformation("{id} token refresh date changed. Next reset in {in}", nextRefreshDue.Humanize());
         }
 
         public void Dispose()
         {
             _timer?.Dispose();
+
+            _cancellation.Cancel();
+            _cancellation.Dispose();
         }
     }
 }

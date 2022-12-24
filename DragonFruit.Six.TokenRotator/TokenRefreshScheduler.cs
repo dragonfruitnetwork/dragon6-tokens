@@ -39,7 +39,7 @@ namespace DragonFruit.Six.TokenRotator
                                 .ToList();
 
             var scheduledCredentials = new List<UbisoftServiceCredentials>();
-            var existingTokens = await _storage.GetAllTokens().ConfigureAwait(false);
+            var existingTokens = await _storage.GetAllTokens(cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count);
 

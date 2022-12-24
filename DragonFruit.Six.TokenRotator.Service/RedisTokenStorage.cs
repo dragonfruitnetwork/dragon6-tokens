@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using DragonFruit.Six.Api.Authentication.Entities;
@@ -21,13 +22,13 @@ namespace DragonFruit.Six.TokenRotator.Service
             _redis = redis;
         }
 
-        public Task AddToken(UbisoftToken token)
+        public Task AddToken(UbisoftToken token, CancellationToken cancellation)
         {
             var redisToken = _mapper.Map<RedisServiceToken>(token);
             return _redis.RedisCollection<RedisServiceToken>().InsertAsync(redisToken, WhenKey.Always, token.Expiry - DateTime.UtcNow);
         }
 
-        public async Task RemoveToken(string sessionId)
+        public async Task RemoveToken(string sessionId, CancellationToken cancellation)
         {
             var collection = _redis.RedisCollection<RedisServiceToken>();
             var token = await collection.FindByIdAsync(sessionId).ConfigureAwait(false);
@@ -38,7 +39,7 @@ namespace DragonFruit.Six.TokenRotator.Service
             }
         }
 
-        public async Task<ICollection<IUbisoftAccountToken>> GetAllTokens()
+        public async Task<ICollection<IUbisoftAccountToken>> GetAllTokens(CancellationToken cancellation)
         {
             var allItems = await _redis.RedisCollection<RedisServiceToken>().ToListAsync().ConfigureAwait(false);
             return (ICollection<IUbisoftAccountToken>)allItems;
