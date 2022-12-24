@@ -79,6 +79,11 @@ namespace DragonFruit.Six.TokenRotator
                             .RetryAsync(5, (e, _) => logger.LogWarning("Data persistence failed: {message}", e.Message))
                             .ExecuteAsync(() => storage.AddToken(ubisoftToken, _cancellation.Token))
                             .ConfigureAwait(false);
+
+                if (!string.IsNullOrEmpty(LastTokenSessionId))
+                {
+                    _ = storage.RemoveToken(LastTokenSessionId, _cancellation.Token);
+                }
             }
             catch (Exception ex)
             {
