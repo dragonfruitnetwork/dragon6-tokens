@@ -45,7 +45,7 @@ namespace DragonFruit.Six.TokenRotator.Service
 
         private static void ConfigureServices(HostBuilderContext ctx, IServiceCollection services)
         {
-            services.AddAutoMapper(mapper => mapper.CreateMap<UbisoftToken, RedisServiceToken>().ReverseMap());
+            services.AddAutoMapper(mapper => mapper.CreateMap<UbisoftToken, RedisServiceToken>());
 
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(GetRedisConfig(ctx.Configuration)));
             services.AddSingleton(s => new RedisConnectionProvider(s.GetRequiredService<IConnectionMultiplexer>()));
