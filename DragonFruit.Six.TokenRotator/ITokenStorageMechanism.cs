@@ -12,6 +12,6 @@ namespace DragonFruit.Six.TokenRotator
         Task AddToken(UbisoftToken token);
         Task RemoveToken(string sessionId);
 
-        Task<IReadOnlyCollection<UbisoftToken>> GetAllTokens();
+        Task<ICollection<IUbisoftAccountToken>> GetAllTokens();
     }
 }
