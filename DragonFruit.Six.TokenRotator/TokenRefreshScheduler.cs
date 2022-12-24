@@ -65,13 +65,19 @@ namespace DragonFruit.Six.TokenRotator
 
             foreach (var serviceGroup in logins.Except(scheduledCredentials).GroupBy(x => x.Service))
             {
-                // schedule all remaining credentials at 2 minute intervals
+                // schedule all remaining credentials at 2~3 minute intervals
                 // if there's no pre-existing token for a specific service it gets run instantly
                 var interval = scheduledCredentials.Any(x => x.Service == serviceGroup.Key) ? 1 : 0;
 
                 foreach (var credential in serviceGroup)
                 {
                     var delay = TimeSpan.FromMinutes(2 * interval++);
+
+                    if (delay > TimeSpan.Zero)
+                    {
+                        // add a random number of seconds to help space out concurrent requests
+                        delay += TimeSpan.FromSeconds(Random.Shared.Next(0, 55));
+                    }
 
                     _clients.Add(new ServiceTokenClient(_ssf, credential, delay));
                     _logger.LogInformation("{name}: first token to be fetched in {number}", credential, delay.Humanize());
