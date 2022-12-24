@@ -50,6 +50,8 @@ namespace DragonFruit.Six.TokenRotator
             var storage = scope.ServiceProvider.GetRequiredService<ITokenStorageMechanism>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<ServiceTokenClient>>();
 
+            logger.LogInformation("{id} token refresh started (replacing {oldTokenId})", Credentials, LastTokenSessionId);
+
             var ubisoftToken = await Policy.Handle<Exception>()
                                            .WaitAndRetryForeverAsync(a => TimeSpan.FromSeconds(Math.Max(5 * a, 60)), (exception, timeout) => logger.LogWarning("Token fetch for {cred} failed (waiting {x} seconds): {ex}", Credentials, timeout.TotalSeconds, exception.Message))
                                            .ExecuteAsync(async () =>
@@ -61,6 +63,7 @@ namespace DragonFruit.Six.TokenRotator
                                            .ConfigureAwait(false);
 
             Debug.Assert(ubisoftToken != null);
+            logger.LogInformation("New token acquired for {id} (session id {sid}, expiry {exp})", Credentials, ubisoftToken.SessionId, ubisoftToken.Expiry.ToString("f"));
 
             try
             {
