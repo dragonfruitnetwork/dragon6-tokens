@@ -45,7 +45,7 @@ namespace DragonFruit.Six.TokenRotator
             _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count);
 
             // for all existing tokens, set them up to refresh as normal
-            foreach (var token in existingTokens)
+            foreach (var token in existingTokens.OrderBy(x => x.UbisoftId))
             {
                 // locate the service credentials used
                 var associatedCredentials = logins.SingleOrDefault(x => token.UbisoftId == x.Id && x.Service.AppId() == token.AppId);
