@@ -260,3 +260,5 @@ paket-files/
 __pycache__/
 *.pyc
 /Nuget/lib/Dragon6.API.dll
+
+d6accounts.ini

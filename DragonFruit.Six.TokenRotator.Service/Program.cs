@@ -18,7 +18,7 @@ namespace DragonFruit.Six.TokenRotator.Service
         public static async Task Main(string[] args)
         {
             var host = Host.CreateDefaultBuilder(args)
-                           .ConfigureAppConfiguration(cfg => cfg.AddIniFile("d6tokens.ini"))
+                           .ConfigureAppConfiguration(cfg => cfg.AddIniFile("d6accounts.ini"))
                            .ConfigureServices(ConfigureServices)
                            .Build();
 
