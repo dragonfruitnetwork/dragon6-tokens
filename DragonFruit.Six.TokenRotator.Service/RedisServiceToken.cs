@@ -19,6 +19,7 @@ namespace DragonFruit.Six.TokenRotator.Service
 
         public DateTime Expiry { get; set; }
 
+        [Indexed]
         public string UbisoftId { get; set; }
 
         [Indexed(Aggregatable = true, Sortable = true)]
