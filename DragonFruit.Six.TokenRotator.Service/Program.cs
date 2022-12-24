@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Net.Security;
 using System.Reflection;
 using System.Threading.Tasks;
 using DragonFruit.Data;
@@ -79,7 +80,18 @@ namespace DragonFruit.Six.TokenRotator.Service
             redisConfig.EndPoints.Add(config["Redis:Host"], int.TryParse(config["Redis:Port"], out var p) ? p : 6379);
 #endif
 
-            redisConfig.CertificateValidation += delegate { return true; };
+            redisConfig.CertificateValidation += (sender, certificate, chain, errors) =>
+            {
+                var certFingerprint = config["Redis:IssuerCertificateFingerprint"];
+
+                if (string.IsNullOrEmpty(certFingerprint))
+                {
+                    return errors == SslPolicyErrors.None;
+                }
+
+                return chain?.ChainElements.Any(x => x.Certificate.Thumbprint.Equals(certFingerprint)) == true;
+            };
+
             return redisConfig;
         }
     }
