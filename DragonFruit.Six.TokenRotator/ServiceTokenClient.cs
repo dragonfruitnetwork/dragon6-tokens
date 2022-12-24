@@ -16,11 +16,11 @@ namespace DragonFruit.Six.TokenRotator
 {
     public class ServiceTokenClient : IDisposable
     {
-        internal const int TokenRefreshPreempt = 30;
-
         private readonly Timer _timer;
         private readonly IServiceScopeFactory _ssf;
         private readonly CancellationTokenSource _cancellation = new();
+
+        internal static TimeSpan TokenRefreshPreempt => TimeSpan.FromMinutes(1800 + Random.Shared.Next(0, 180));
 
         public ServiceTokenClient(IServiceScopeFactory ssf, UbisoftServiceCredentials credentials, IUbisoftToken token)
         {
@@ -28,7 +28,7 @@ namespace DragonFruit.Six.TokenRotator
             LastTokenSessionId = token.SessionId;
 
             // ensure that the due timespan is not negative
-            var nextUpdateDue = token.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt);
+            var nextUpdateDue = token.Expiry - DateTime.UtcNow.Add(TokenRefreshPreempt);
 
             if (nextUpdateDue < TimeSpan.Zero)
             {
@@ -86,7 +86,7 @@ namespace DragonFruit.Six.TokenRotator
             }
 
             LastTokenSessionId = ubisoftToken.SessionId;
-            var nextRefreshDue = ubisoftToken.Expiry - DateTime.UtcNow.AddMinutes(TokenRefreshPreempt);
+            var nextRefreshDue = ubisoftToken.Expiry - DateTime.UtcNow.Add(TokenRefreshPreempt);
 
             _timer.Change(nextRefreshDue, Timeout.InfiniteTimeSpan);
             logger.LogInformation("{id} token refresh date changed. Next reset in {in}", Credentials, nextRefreshDue.Humanize());

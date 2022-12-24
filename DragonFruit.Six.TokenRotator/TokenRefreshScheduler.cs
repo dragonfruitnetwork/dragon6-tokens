@@ -57,7 +57,7 @@ namespace DragonFruit.Six.TokenRotator
                 }
 
                 scheduledCredentials.Add(associatedCredentials);
-                var nextRefreshIn = token.Expiry.AddMinutes(-ServiceTokenClient.TokenRefreshPreempt) - DateTime.UtcNow;
+                var nextRefreshIn = token.Expiry - DateTime.UtcNow.Add(ServiceTokenClient.TokenRefreshPreempt);
 
                 _clients.Add(new ServiceTokenClient(_ssf, associatedCredentials, token));
                 _logger.LogInformation("{credential}: Existing token {sessionId} found, next refresh in {x}", associatedCredentials, token.SessionId, nextRefreshIn.Humanize());
@@ -76,7 +76,7 @@ namespace DragonFruit.Six.TokenRotator
                     if (delay > TimeSpan.Zero)
                     {
                         // add a random number of seconds to help space out concurrent requests
-                        delay += TimeSpan.FromSeconds(Random.Shared.Next(0, 55));
+                        delay += TimeSpan.FromSeconds(Random.Shared.Next(0, 180));
                     }
 
                     _clients.Add(new ServiceTokenClient(_ssf, credential, delay));
