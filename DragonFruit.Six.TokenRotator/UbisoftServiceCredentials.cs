@@ -19,6 +19,8 @@ namespace DragonFruit.Six.TokenRotator
         }
 
         public string Id { get; private init; }
+        public string Nickname { get; private init; }
+
         public string Email { get; private init; }
         public string Password { get; private init; }
 
@@ -33,14 +35,16 @@ namespace DragonFruit.Six.TokenRotator
             {
                 yield return new UbisoftServiceCredentials
                 {
-                    Id = config.Key,
                     Service = service,
+                    Nickname = config.Key,
+
+                    Id = config["Id"],
                     Email = config["Email"],
                     Password = config["Password"]
                 };
             }
         }
 
-        public override string ToString() => $"{Id}@{Service}";
+        public override string ToString() => $"{Nickname} ({Service})";
     }
 }
