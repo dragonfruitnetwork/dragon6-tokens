@@ -40,12 +40,16 @@ namespace DragonFruit.Six.TokenRotator
                                 .ToList();
 
             var scheduledCredentials = new List<UbisoftServiceCredentials>();
-            var existingTokens = await _storage.GetTokens(logins.Select(x => x.Id).Distinct(), cancellationToken).ConfigureAwait(false);
+            IEnumerable<IUbisoftAccountToken> existingTokens = await _storage.GetTokens(logins.Select(x => x.Id).Distinct(), cancellationToken).ConfigureAwait(false);
 
-            _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count);
+            _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count());
 
-            // for all existing tokens, set them up to refresh as normal
-            foreach (var token in existingTokens.OrderBy(x => x.UbisoftId))
+            // ensure that duplicate tokens with the same app and ubisoft id are ignored (keep the newest token)
+            existingTokens = existingTokens.GroupBy(x => new { x.UbisoftId, x.AppId })
+                                           .Select(x => x.MaxBy(t => t.Expiry))
+                                           .OrderBy(x => x.UbisoftId);
+
+            foreach (var token in existingTokens)
             {
                 // locate the service credentials used
                 var associatedCredentials = logins.SingleOrDefault(x => token.UbisoftId == x.Id && x.Service.AppId() == token.AppId);
@@ -63,13 +67,13 @@ namespace DragonFruit.Six.TokenRotator
                 _logger.LogInformation("{credential}: Existing token {sessionId} found, next refresh in {x}", associatedCredentials, token.SessionId, nextRefreshIn.Humanize());
             }
 
-            foreach (var serviceGroup in logins.Except(scheduledCredentials).GroupBy(x => x.Service))
+            foreach (var pendingServiceGroups in logins.Except(scheduledCredentials).GroupBy(x => x.Service))
             {
                 // schedule all remaining credentials at 2~3 minute intervals
                 // if there's no pre-existing token for a specific service it gets run instantly
-                var interval = scheduledCredentials.Any(x => x.Service == serviceGroup.Key) ? 1 : 0;
+                var interval = scheduledCredentials.Any(x => x.Service == pendingServiceGroups.Key) ? 1 : 0;
 
-                foreach (var credential in serviceGroup)
+                foreach (var credential in pendingServiceGroups)
                 {
                     var delay = TimeSpan.FromMinutes(2 * interval++);
 
