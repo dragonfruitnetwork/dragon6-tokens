@@ -16,7 +16,7 @@ namespace DragonFruit.Six.TokenRotator
 {
     public class ServiceTokenClient : IDisposable
     {
-        private const int TokenRefreshPreempt = 30;
+        internal const int TokenRefreshPreempt = 30;
 
         private readonly Timer _timer;
         private readonly IServiceScopeFactory _ssf;
@@ -53,12 +53,12 @@ namespace DragonFruit.Six.TokenRotator
             logger.LogInformation("{id} token refresh started (replacing {oldTokenId})", Credentials, LastTokenSessionId);
 
             var ubisoftToken = await Policy.Handle<Exception>()
-                                           .WaitAndRetryForeverAsync(a => TimeSpan.FromSeconds(Math.Max(5 * a, 60)), (exception, timeout) => logger.LogWarning("Token fetch for {cred} failed (waiting {x} seconds): {ex}", Credentials, timeout.TotalSeconds, exception.Message))
+                                           .WaitAndRetryForeverAsync(a => TimeSpan.FromSeconds(Math.Min(5 * a, 60)), (exception, timeout) => logger.LogWarning("Token fetch for {cred} failed (waiting {x} seconds): {ex}", Credentials, timeout.TotalSeconds, exception.Message))
                                            .ExecuteAsync(async () =>
                                            {
                                                using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
                                                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token, _cancellation.Token);
-                                               return await client.GetUbiTokenAsync(Credentials.Email, Credentials.Password, Credentials.Service, linkedCancellation.Token);
+                                               return await client.GetUbiTokenAsync(Credentials.Email, Credentials.Password, Credentials.Service, linkedCancellation.Token).ConfigureAwait(false);
                                            })
                                            .ConfigureAwait(false);
 

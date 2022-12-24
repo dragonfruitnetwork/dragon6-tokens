@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DragonFruit.Six.Api;
+using Humanizer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,25 +52,30 @@ namespace DragonFruit.Six.TokenRotator
 
                 if (associatedCredentials == null)
                 {
-                    _logger.LogInformation("Token {id} (from {user}) could not be matched to an account. It will not be refreshed", token.SessionId, token.UbisoftId);
+                    _logger.LogWarning("Token {id} (from {user}) could not be matched to an account. It will not be refreshed", token.SessionId, token.UbisoftId);
                     continue;
                 }
 
                 scheduledCredentials.Add(associatedCredentials);
+                var nextRefreshIn = token.Expiry.AddMinutes(-ServiceTokenClient.TokenRefreshPreempt) - DateTime.UtcNow;
+
                 _clients.Add(new ServiceTokenClient(_ssf, associatedCredentials, token));
+                _logger.LogInformation("{credential}: Existing token {sessionId} found, next refresh in {x}", associatedCredentials, token.SessionId, nextRefreshIn.Humanize());
             }
 
-            // schedule all remaining credentials at 2 minute intervals
-            // if there's no pre-existing token for a specific service it gets run instantly
-            var interval = 1;
-
-            foreach (var credential in logins.Except(scheduledCredentials))
+            foreach (var serviceGroup in logins.Except(scheduledCredentials).GroupBy(x => x.Service))
             {
-                var isPreExistingToken = existingTokens.Any(x => x.AppId == credential.Service.AppId());
-                var delay = isPreExistingToken ? TimeSpan.FromMinutes(2 * interval++) : TimeSpan.Zero;
+                // schedule all remaining credentials at 2 minute intervals
+                // if there's no pre-existing token for a specific service it gets run instantly
+                var interval = scheduledCredentials.Any(x => x.Service == serviceGroup.Key) ? 1 : 0;
 
-                _logger.LogInformation("Service token {name} to be fetched in {number} minutes", credential, delay.TotalMinutes);
-                _clients.Add(new ServiceTokenClient(_ssf, credential, delay));
+                foreach (var credential in serviceGroup)
+                {
+                    var delay = TimeSpan.FromMinutes(2 * interval++);
+
+                    _clients.Add(new ServiceTokenClient(_ssf, credential, delay));
+                    _logger.LogInformation("{name}: first token to be fetched in {number}", credential, delay.Humanize());
+                }
             }
         }
 
