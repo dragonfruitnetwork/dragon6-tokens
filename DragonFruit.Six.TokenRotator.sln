@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DragonFruit.Six.TokenRotator", "DragonFruit.Six.TokenRotator\DragonFruit.Six.TokenRotator.csproj", "{92A8D7F8-E526-49E2-910E-4130B3D024AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DragonFruit.Six.TokenRotator.Service", "DragonFruit.Six.TokenRotator.Service\DragonFruit.Six.TokenRotator.Service.csproj", "{22EAD15B-2191-4882-8724-1E5682D666AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{92A8D7F8-E526-49E2-910E-4130B3D024AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92A8D7F8-E526-49E2-910E-4130B3D024AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92A8D7F8-E526-49E2-910E-4130B3D024AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22EAD15B-2191-4882-8724-1E5682D666AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22EAD15B-2191-4882-8724-1E5682D666AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22EAD15B-2191-4882-8724-1E5682D666AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22EAD15B-2191-4882-8724-1E5682D666AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
