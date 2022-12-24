@@ -10,6 +10,7 @@ using DragonFruit.Six.Api;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DragonFruit.Six.TokenRotator
 {
@@ -18,13 +19,16 @@ namespace DragonFruit.Six.TokenRotator
         private readonly IConfiguration _config;
         private readonly IServiceScopeFactory _ssf;
         private readonly ITokenStorageMechanism _storage;
+        private readonly ILogger<TokenRefreshScheduler> _logger;
+
         private readonly List<ServiceTokenClient> _clients = new();
 
-        public TokenRefreshScheduler(IConfiguration config, IServiceScopeFactory ssf, ITokenStorageMechanism storage)
+        public TokenRefreshScheduler(IConfiguration config, IServiceScopeFactory ssf, ITokenStorageMechanism storage, ILogger<TokenRefreshScheduler> logger)
         {
             _ssf = ssf;
             _config = config;
             _storage = storage;
+            _logger = logger;
         }
 
         async Task IHostedService.StartAsync(CancellationToken cancellationToken)
@@ -37,6 +41,8 @@ namespace DragonFruit.Six.TokenRotator
             var scheduledCredentials = new List<UbisoftServiceCredentials>();
             var existingTokens = await _storage.GetAllTokens().ConfigureAwait(false);
 
+            _logger.LogInformation("Discovered {count} logins and {number} active tokens", logins.Count, existingTokens.Count);
+
             // for all existing tokens, set them up to refresh as normal
             foreach (var token in existingTokens)
             {
@@ -45,6 +51,7 @@ namespace DragonFruit.Six.TokenRotator
 
                 if (associatedCredentials == null)
                 {
+                    _logger.LogInformation("Token {id} (from {user}) could not be matched to an account. It will not be refreshed", token.SessionId, token.UbisoftId);
                     continue;
                 }
 
@@ -61,12 +68,15 @@ namespace DragonFruit.Six.TokenRotator
                 var isPreExistingToken = existingTokens.Any(x => x.AppId == credential.Service.AppId());
                 var delay = isPreExistingToken ? TimeSpan.FromMinutes(2 * interval++) : TimeSpan.Zero;
 
+                _logger.LogInformation("Service token {name} to be fetched in {number} minutes", credential, delay.TotalMinutes);
                 _clients.Add(new ServiceTokenClient(_ssf, credential, delay));
             }
         }
 
         Task IHostedService.StopAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Service stop request received. Disabling all active refresh clients.");
+
             _clients.ForEach(x => x.Dispose());
             _clients.Clear();
 
