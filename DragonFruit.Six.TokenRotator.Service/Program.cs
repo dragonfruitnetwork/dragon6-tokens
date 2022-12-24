@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Net.Security;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -35,6 +37,7 @@ namespace DragonFruit.Six.TokenRotator.Service
 
             using (var scope = host.Services.CreateScope())
             {
+                // perform redis index updates
                 var redis = scope.ServiceProvider.GetRequiredService<RedisConnectionProvider>();
                 var targetTypes = Assembly.GetExecutingAssembly().ExportedTypes.Where(x => x.GetCustomAttribute<DocumentAttribute>() != null);
 
@@ -56,13 +59,21 @@ namespace DragonFruit.Six.TokenRotator.Service
 
         private static void ConfigureServices(HostBuilderContext ctx, IServiceCollection services)
         {
-            services.AddAutoMapper(mapper => mapper.CreateMap<UbisoftToken, RedisServiceToken>());
-
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(GetRedisConfig(ctx.Configuration)));
             services.AddSingleton(s => new RedisConnectionProvider(s.GetRequiredService<IConnectionMultiplexer>()));
 
-            services.AddSingleton<ApiClient, ApiClient<ApiJsonSerializer>>();
+            services.AddAutoMapper(mapper => mapper.CreateMap<UbisoftToken, RedisServiceToken>());
             services.AddScoped<ITokenStorageMechanism, RedisTokenStorage>();
+
+            services.AddSingleton<ApiClient>(new ApiClient<ApiJsonSerializer>
+            {
+                UserAgent = "UbiServices_SDK_2020.Release.58_PC64_ansi_static",
+                Headers = { ["Ubi-localeCode"] = "en-US" },
+                Handler = () => new SocketsHttpHandler
+                {
+                    AutomaticDecompression = DecompressionMethods.All
+                }
+            });
 
             services.AddHostedService<TokenRefreshScheduler>();
         }
